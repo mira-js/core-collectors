@@ -1,7 +1,7 @@
 import Snoowrap from 'snoowrap'
 import { z } from 'zod'
 import type { CollectedItem } from '@mia/shared-core'
-import { Source } from '@mia/shared-core'
+import { CoreSource } from '@mia/shared-core'
 
 export interface RedditCollectorOptions {
   subreddits: string[]
@@ -44,7 +44,7 @@ function toCollectedItem(post: z.infer<typeof RedditPostSchema>, subreddit: stri
   const url = postUrl(post)
   if (!url) return null
   return {
-    source: Source.reddit,
+    source: CoreSource.reddit,
     url,
     title: post.title,
     body: post.selftext,

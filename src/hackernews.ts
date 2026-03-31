@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { CollectedItem } from '@mia/shared-core'
-import { Source } from '@mia/shared-core'
+import { CoreSource } from '@mia/shared-core'
 
 export interface HNCollectorOptions {
   query: string
@@ -40,7 +40,7 @@ export async function collectHackerNews(options: HNCollectorOptions): Promise<Co
   const { hits } = HNAlgoliaResponseSchema.parse(await res.json())
 
   return hits.map((hit) => ({
-    source: Source.hackernews,
+    source: CoreSource.hackernews,
     url: hit.url || `${HN_BASE}${hit.objectID}`,
     title: hit.title,
     body: hit.story_text || '',

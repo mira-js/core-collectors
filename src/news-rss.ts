@@ -1,6 +1,6 @@
 import Parser from 'rss-parser'
 import type { CollectedItem } from '@mia/shared-core'
-import { Source } from '@mia/shared-core'
+import { CoreSource } from '@mia/shared-core'
 
 export interface RSSCollectorOptions {
   feeds: string[]
@@ -56,7 +56,7 @@ async function toCollectedItem(
 ): Promise<CollectedItem> {
   const fullText = enableFullText && item.link ? await fetchFullText(item.link) : ''
   return {
-    source: Source.news,
+    source: CoreSource.news,
     url: item.link || '',
     title: item.title || '',
     body: fullText || item.contentSnippet || item.content || '',
