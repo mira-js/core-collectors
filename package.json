@@ -1,0 +1,33 @@
+{
+  "name": "@mia/core-collectors",
+  "version": "0.1.0",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@mia/shared-core": "workspace:*",
+    "rss-parser": "^3.13.0",
+    "snoowrap": "^1.23.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/snoowrap": "^1.9.12",
+    "typescript": "^5.7.2"
+  }
+}
