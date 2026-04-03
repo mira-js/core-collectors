@@ -9,19 +9,42 @@ export interface RedditCollectorOptions {
   limit?: number
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function readString(record: Record<string, unknown>, key: string): string | undefined {
+  const value = record[key]
+  return typeof value === 'string' ? value : undefined
+}
+
+function extractReplies(comments: unknown): string[] {
+  if (!Array.isArray(comments)) return []
+  return comments.slice(0, 10).flatMap((c) => {
+    if (!isRecord(c)) return []
+    const body = readString(c, 'body')
+    return body ? [body] : []
+  })
+}
+
 // ─── Zod schemas ──────────────────────────────────────────────────────────────
 
 const RedditPostSchema = z.object({
   title: z.string().default(''),
   selftext: z.string().default(''),
-  author: z.union([z.string(), z.object({ name: z.string() })]).transform((v) =>
-    typeof v === 'string' ? v : v.name,
-  ),
+  author: z
+    .union([z.string(), z.object({ name: z.string() }), z.null()])
+    .optional()
+    .transform((v) => {
+      if (v === undefined || v === null) return ''
+      return typeof v === 'string' ? v : v.name
+    }),
   score: z.number().default(0),
   num_comments: z.number().default(0),
   created_utc: z.number().transform((s) => new Date(s * 1000).toISOString()),
   permalink: z.string().optional(),
   url: z.string().optional(),
+  comments: z.unknown().optional(),
 })
 
 const RedditSearchResponseSchema = z.object({
@@ -40,7 +63,11 @@ function postUrl(post: z.infer<typeof RedditPostSchema>): string {
   return post.url ?? ''
 }
 
-function toCollectedItem(post: z.infer<typeof RedditPostSchema>, subreddit: string): CollectedItem | null {
+function toCollectedItem(
+  post: z.infer<typeof RedditPostSchema>,
+  subreddit: string,
+  includeCommentBodies: boolean,
+): CollectedItem | null {
   const url = postUrl(post)
   if (!url) return null
   return {
@@ -51,7 +78,7 @@ function toCollectedItem(post: z.infer<typeof RedditPostSchema>, subreddit: stri
     author: post.author || '[deleted]',
     timestamp: post.created_utc,
     engagement: { upvotes: post.score, comments: post.num_comments },
-    raw_replies: [],
+    raw_replies: includeCommentBodies ? extractReplies(post.comments) : [],
     subreddit,
   }
 }
@@ -74,7 +101,7 @@ async function searchSubredditUnauthenticated(
   if (!parsed.success) return []
 
   return parsed.data.data.children
-    .map(({ data: post }) => toCollectedItem(post, subreddit))
+    .map(({ data: post }) => toCollectedItem(post, subreddit, false))
     .filter((item): item is CollectedItem => item !== null)
 }
 
@@ -98,7 +125,7 @@ async function searchSubredditAuthenticated(
   if (!parsed.success) return []
 
   return parsed.data
-    .map((post) => toCollectedItem(post, subreddit))
+    .map((post) => toCollectedItem(post, subreddit, true))
     .filter((item): item is CollectedItem => item !== null)
 }
 

@@ -16,6 +16,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
@@ -28,6 +30,8 @@
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@types/snoowrap": "^1.9.12",
-    "typescript": "^5.7.2"
+    "@vitest/coverage-v8": "^2.1.8",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }
