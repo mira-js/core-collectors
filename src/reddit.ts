@@ -1,7 +1,7 @@
 import Snoowrap from 'snoowrap'
 import { z } from 'zod'
-import type { CollectedItem } from '@mia/shared-core'
-import { CoreSource } from '@mia/shared-core'
+import type { CollectedItem } from '@mira/shared-core'
+import { CoreSource } from '@mira/shared-core'
 
 export interface RedditCollectorOptions {
   subreddits: string[]

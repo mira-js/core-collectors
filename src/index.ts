@@ -1,4 +1,4 @@
-export type { CollectedItem } from '@mia/shared-core'
+export type { CollectedItem } from '@mira/shared-core'
 
 export { collectReddit } from './reddit.js'
 export type { RedditCollectorOptions } from './reddit.js'

@@ -1,5 +1,5 @@
 {
-  "name": "@mia/core-collectors",
+  "name": "@mira/core-collectors",
   "version": "0.1.0",
   "type": "module",
   "publishConfig": {
@@ -22,7 +22,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@mia/shared-core": "workspace:*",
+    "@mira/shared-core": "workspace:*",
     "rss-parser": "^3.13.0",
     "snoowrap": "^1.23.0",
     "zod": "^3.23.0"

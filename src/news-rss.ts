@@ -1,6 +1,6 @@
 import Parser from 'rss-parser'
-import type { CollectedItem } from '@mia/shared-core'
-import { CoreSource } from '@mia/shared-core'
+import type { CollectedItem } from '@mira/shared-core'
+import { CoreSource } from '@mira/shared-core'
 
 export interface RSSCollectorOptions {
   feeds: string[]
