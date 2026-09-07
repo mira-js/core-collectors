@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@mira/shared-core": "workspace:*",
+    "anmar": "file:../../../vendor/anmar-0.0.1.tgz",
     "rss-parser": "^3.13.0",
     "snoowrap": "^1.23.0",
     "zod": "^3.23.0"
