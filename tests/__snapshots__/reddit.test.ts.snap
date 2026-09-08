@@ -1,0 +1,51 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`collectReddit (Apify) > maps the fixture actor run to CollectedItem[] 1`] = `
+[
+  {
+    "author": "saas_founder_92",
+    "body": "We switched billing providers last month and every third invoice goes out twice. Support has been useless.",
+    "engagement": {
+      "comments": 38,
+      "upvotes": 214,
+    },
+    "raw_replies": [
+      "Same here. We moved to a different provider after the third incident.",
+      "Check your webhook retry config — that bit us too.",
+    ],
+    "source": "reddit",
+    "subreddit": "SaaS",
+    "timestamp": "2026-08-14T09:12:44.000Z",
+    "title": "Invoicing tool keeps double charging our customers",
+    "url": "https://www.reddit.com/r/SaaS/comments/1abcxyz/invoicing_tool_keeps_double_charging/",
+  },
+  {
+    "author": "bootstrapped_bea",
+    "body": "",
+    "engagement": {
+      "comments": 12,
+      "upvotes": 47,
+    },
+    "raw_replies": [],
+    "source": "reddit",
+    "subreddit": "SaaS",
+    "timestamp": "2026-08-19T17:03:10.000Z",
+    "title": "What do you use for invoicing at <$10k MRR?",
+    "url": "https://www.reddit.com/r/SaaS/comments/1abd001/what_do_you_use_for_invoicing/",
+  },
+  {
+    "author": "[deleted]",
+    "body": "Spending 6+ hours a week matching payouts to invoices by hand.",
+    "engagement": {
+      "comments": 0,
+      "upvotes": 9,
+    },
+    "raw_replies": [],
+    "source": "reddit",
+    "subreddit": "SaaS",
+    "timestamp": "2026-08-21T04:55:02.000Z",
+    "title": "Invoice reconciliation is eating my week",
+    "url": "https://www.reddit.com/r/SaaS/comments/1abd442/deleted_author_invoice_thread/",
+  },
+]
+`;

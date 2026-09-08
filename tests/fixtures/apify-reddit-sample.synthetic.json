@@ -1,0 +1,46 @@
+{
+  "__SYNTHETIC__": "NOT a real Apify run. Hand-written against the DOCUMENTED (unverified) trudax/reddit-scraper output shape because no APIFY_API_TOKEN was available at implementation time. AC 'fixture captured from one real actor run' (item-25 plan line 16) is still OUTSTANDING: replace this file with tests/fixtures/apify-reddit-run.json captured from a real run and re-point reddit.test.ts at it.",
+  "items": [
+    {
+      "url": "https://www.reddit.com/r/SaaS/comments/1abcxyz/invoicing_tool_keeps_double_charging/",
+      "title": "Invoicing tool keeps double charging our customers",
+      "body": "We switched billing providers last month and every third invoice goes out twice. Support has been useless.",
+      "username": "saas_founder_92",
+      "upVotes": 214,
+      "numberOfComments": 38,
+      "createdAt": "2026-08-14T09:12:44.000Z",
+      "communityName": "r/SaaS",
+      "parsedCommunityName": "SaaS",
+      "dataType": "post",
+      "comments": [
+        { "body": "Same here. We moved to a different provider after the third incident." },
+        { "body": "Check your webhook retry config — that bit us too." }
+      ]
+    },
+    {
+      "url": "https://www.reddit.com/r/SaaS/comments/1abd001/what_do_you_use_for_invoicing/",
+      "title": "What do you use for invoicing at <$10k MRR?",
+      "body": "",
+      "username": "bootstrapped_bea",
+      "upVotes": 47,
+      "numberOfComments": 12,
+      "createdAt": "2026-08-19T17:03:10.000Z",
+      "communityName": "r/SaaS",
+      "parsedCommunityName": "SaaS",
+      "dataType": "post",
+      "comments": []
+    },
+    {
+      "url": "https://www.reddit.com/r/SaaS/comments/1abd442/deleted_author_invoice_thread/",
+      "title": "Invoice reconciliation is eating my week",
+      "body": "Spending 6+ hours a week matching payouts to invoices by hand.",
+      "username": null,
+      "upVotes": 9,
+      "numberOfComments": 0,
+      "createdAt": "2026-08-21T04:55:02.000Z",
+      "communityName": "r/SaaS",
+      "parsedCommunityName": "SaaS",
+      "dataType": "post"
+    }
+  ]
+}

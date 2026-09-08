@@ -25,12 +25,10 @@
     "@mira/shared-core": "workspace:*",
     "anmar": "file:../../../vendor/anmar-0.0.1.tgz",
     "rss-parser": "^3.13.0",
-    "snoowrap": "^1.23.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "@types/snoowrap": "^1.9.12",
     "@vitest/coverage-v8": "^2.1.8",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

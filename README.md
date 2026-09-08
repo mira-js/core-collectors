@@ -21,7 +21,7 @@ pnpm add @mia/core-collectors
 
 ### Reddit — `collectReddit`
 
-Searches one or more subreddits for posts matching a query. Falls back to the public JSON API when no OAuth credentials are configured.
+Searches one or more subreddits for posts matching a query via the Apify actor [`trudax/reddit-scraper`](https://apify.com/trudax/reddit-scraper) — a **paid rental actor**. Reddit's own unauthenticated JSON API returns 403, and the free OAuth tier excludes competitor monitoring, so there is no free fallback path.
 
 ```ts
 import { collectReddit } from '@mia/core-collectors'
@@ -33,21 +33,17 @@ const items = await collectReddit({
 })
 ```
 
-**Rate limits:**
-- Unauthenticated (default): ~10 requests/min per subreddit
-- Authenticated OAuth app: ~100 requests/min
-
-**Credentials (optional):** Set these env vars to use the OAuth path:
+**Credentials (required):**
 
 ```bash
-REDDIT_CLIENT_ID=
-REDDIT_CLIENT_SECRET=
-REDDIT_USERNAME=
-REDDIT_PASSWORD=
-REDDIT_USER_AGENT=myapp/0.1.0
+APIFY_API_TOKEN=      # required — collectReddit throws without it
 ```
 
-If any of the four credential vars is missing, the collector silently uses the unauthenticated path.
+All subreddits are covered by a **single** actor run (one start URL per subreddit);
+`limit` maps to the actor's `maxPostCount` and stays per-subreddit. Rate limiting and
+retries are handled by the Apify platform; cost is per result, so keep `limit` tight.
+
+See *Error behavior* below — this collector throws rather than returning partial results.
 
 ---
 
@@ -128,7 +124,7 @@ interface CollectedItem {
 
 Each function is designed to be failure-tolerant:
 
-- `collectReddit` — runs subreddits in parallel with `Promise.allSettled`; failed subreddits are silently skipped
+- `collectReddit` — **fails loudly**. One Apify actor call covers all subreddits; it throws when `APIFY_API_TOKEN` is unset, on a non-ok actor status, on a network/timeout error, on a non-array body, or when the actor returned a non-empty array from which no item survived schema validation (drift). A genuinely empty actor response returns `[]` — that is a real zero-result search, not a failure.
 - `collectHackerNews` — throws on non-2xx response (let your caller handle it)
 - `collectNewsRSS` — runs feeds in parallel with `Promise.allSettled`; failed feeds are silently skipped; full-text fetch has a 10 s timeout per article
 

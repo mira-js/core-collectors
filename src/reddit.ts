@@ -1,13 +1,15 @@
-import Snoowrap from 'snoowrap'
 import { z } from 'zod'
 import type { CollectedItem } from '@mira/shared-core'
 import { CoreSource } from '@mira/shared-core'
+import { requestApifyActor } from './apify.js'
 
 export interface RedditCollectorOptions {
   subreddits: string[]
   query: string
   limit?: number
 }
+
+const REDDIT_ACTOR_ID = 'trudax/reddit-scraper'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -27,146 +29,118 @@ function extractReplies(comments: unknown): string[] {
   })
 }
 
-// ─── Zod schemas ──────────────────────────────────────────────────────────────
+// ─── Zod schema ───────────────────────────────────────────────────────────────
 
-const RedditPostSchema = z.object({
+const AuthorSchema = z
+  .union([z.string(), z.object({ name: z.string() }), z.null()])
+  .optional()
+  .transform((v) => {
+    if (v === undefined || v === null) return ''
+    return typeof v === 'string' ? v : v.name
+  })
+
+const TimestampSchema = z
+  .union([z.string(), z.number(), z.null()])
+  .optional()
+  .transform((v) => {
+    if (v === undefined || v === null) return new Date(0).toISOString()
+    // Actor emits ISO strings; numbers are treated as unix seconds.
+    const date = typeof v === 'number' ? new Date(v * 1000) : new Date(v)
+    return Number.isNaN(date.getTime()) ? new Date(0).toISOString() : date.toISOString()
+  })
+
+/**
+ * Dataset item shape for `trudax/reddit-scraper` post records.
+ *
+ * `url` is deliberately required and non-empty — it is the identity of the item
+ * and the one field whose absence means the response shape has drifted.
+ */
+const ApifyRedditPostSchema = z.object({
+  url: z.string().min(1),
   title: z.string().default(''),
-  selftext: z.string().default(''),
-  author: z
-    .union([z.string(), z.object({ name: z.string() }), z.null()])
-    .optional()
-    .transform((v) => {
-      if (v === undefined || v === null) return ''
-      return typeof v === 'string' ? v : v.name
-    }),
-  score: z.number().default(0),
-  num_comments: z.number().default(0),
-  created_utc: z.number().transform((s) => new Date(s * 1000).toISOString()),
-  permalink: z.string().optional(),
-  url: z.string().optional(),
+  body: z.string().nullish().transform((v) => v ?? ''),
+  username: AuthorSchema,
+  upVotes: z.number().nullish().transform((v) => v ?? 0),
+  numberOfComments: z.number().nullish().transform((v) => v ?? 0),
+  createdAt: TimestampSchema,
+  communityName: z.string().nullish().transform((v) => v ?? ''),
+  parsedCommunityName: z.string().nullish().transform((v) => v ?? ''),
+  dataType: z.string().nullish().transform((v) => v ?? ''),
   comments: z.unknown().optional(),
 })
 
-const RedditSearchResponseSchema = z.object({
-  data: z.object({
-    children: z.array(z.object({ data: RedditPostSchema })),
-  }),
-})
+type ApifyRedditPost = z.infer<typeof ApifyRedditPostSchema>
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function postUrl(post: z.infer<typeof RedditPostSchema>): string {
-  if (post.permalink) {
-    const p = post.permalink
-    return `https://reddit.com${p.startsWith('/') ? p : `/${p}`}`
-  }
-  return post.url ?? ''
+function normalizeSubreddit(post: ApifyRedditPost): string {
+  const name = post.parsedCommunityName || post.communityName
+  return name.replace(/^\/?r\//, '')
 }
 
-function toCollectedItem(
-  post: z.infer<typeof RedditPostSchema>,
-  subreddit: string,
-  includeCommentBodies: boolean,
-): CollectedItem | null {
-  const url = postUrl(post)
-  if (!url) return null
+function toCollectedItem(post: ApifyRedditPost): CollectedItem | null {
+  if (!post.url) return null
   return {
     source: CoreSource.reddit,
-    url,
+    url: post.url,
     title: post.title,
-    body: post.selftext,
-    author: post.author || '[deleted]',
-    timestamp: post.created_utc,
-    engagement: { upvotes: post.score, comments: post.num_comments },
-    raw_replies: includeCommentBodies ? extractReplies(post.comments) : [],
-    subreddit,
+    body: post.body,
+    author: post.username || '[deleted]',
+    timestamp: post.createdAt,
+    engagement: { upvotes: post.upVotes, comments: post.numberOfComments },
+    raw_replies: extractReplies(post.comments),
+    subreddit: normalizeSubreddit(post),
   }
 }
 
-// ─── Unauthenticated path ─────────────────────────────────────────────────────
-
-async function searchSubredditUnauthenticated(
-  subreddit: string,
-  query: string,
-  limit: number,
-): Promise<CollectedItem[]> {
-  const params = new URLSearchParams({ q: query, restrict_sr: 'true', sort: 'relevance', limit: String(limit) })
-  const res = await fetch(
-    `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/search.json?${params}`,
-    { headers: { 'User-Agent': process.env.REDDIT_USER_AGENT || 'mia/0.1.0' } },
-  )
-  if (!res.ok) throw new Error(`Reddit search failed: ${res.status}`)
-
-  const parsed = RedditSearchResponseSchema.safeParse(await res.json())
-  if (!parsed.success) return []
-
-  return parsed.data.data.children
-    .map(({ data: post }) => toCollectedItem(post, subreddit, false))
-    .filter((item): item is CollectedItem => item !== null)
-}
-
-// ─── Authenticated path ───────────────────────────────────────────────────────
-
-const SnoowrapResultSchema = z.array(RedditPostSchema)
-
-async function searchSubredditAuthenticated(
-  client: Snoowrap,
-  subreddit: string,
-  query: string,
-  limit: number,
-): Promise<CollectedItem[]> {
-  const raw: unknown = await client.oauthRequest({
-    uri: `r/${subreddit}/search`,
-    method: 'get',
-    qs: { q: query, restrict_sr: true, sort: 'relevance', limit },
-  })
-
-  const parsed = SnoowrapResultSchema.safeParse(raw)
-  if (!parsed.success) return []
-
-  return parsed.data
-    .map((post) => toCollectedItem(post, subreddit, true))
-    .filter((item): item is CollectedItem => item !== null)
+function searchUrl(subreddit: string, query: string): string {
+  return `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/search/?q=${encodeURIComponent(query)}&restrict_sr=1&sort=relevance`
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Collect posts from Reddit.
+ * Collect Reddit posts via the Apify actor `trudax/reddit-scraper`.
  *
- * Authenticated path (100 req/min): set REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET,
- *   REDDIT_USERNAME, REDDIT_PASSWORD, REDDIT_USER_AGENT.
+ * Requires `APIFY_API_TOKEN` (paid rental actor).
  *
- * Unauthenticated fallback (10 req/min): omit the above — uses the public
- *   JSON API with a User-Agent header only.
+ * Fail-loud contract: this **throws** when the token is missing, the actor
+ * returns a non-ok status, the request fails, the body is not an array, or the
+ * actor returned a non-empty array from which no item survived parsing (schema
+ * drift). A genuinely empty actor response returns `[]` — that is a real
+ * zero-result search, not a failure.
  */
 export async function collectReddit(options: RedditCollectorOptions): Promise<CollectedItem[]> {
   const { subreddits, query, limit = 25 } = options
 
-  const hasCredentials = !!(
-    process.env.REDDIT_CLIENT_ID &&
-    process.env.REDDIT_CLIENT_SECRET &&
-    process.env.REDDIT_USERNAME &&
-    process.env.REDDIT_PASSWORD
-  )
-
-  if (!hasCredentials) {
-    const settled = await Promise.allSettled(
-      subreddits.map((s) => searchSubredditUnauthenticated(s, query, limit)),
-    )
-    return settled.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
-  }
-
-  const client = new Snoowrap({
-    userAgent: process.env.REDDIT_USER_AGENT || 'mia/0.1.0',
-    clientId: process.env.REDDIT_CLIENT_ID,
-    clientSecret: process.env.REDDIT_CLIENT_SECRET,
-    username: process.env.REDDIT_USERNAME,
-    password: process.env.REDDIT_PASSWORD,
+  const result = await requestApifyActor(REDDIT_ACTOR_ID, {
+    startUrls: subreddits.map((s) => searchUrl(s, query)),
+    sort: 'Relevance',
+    searchPosts: true,
+    maxPostCount: limit,
+    maxItems: limit * subreddits.length,
+    maxComments: 10,
   })
 
-  const settled = await Promise.allSettled(
-    subreddits.map((s) => searchSubredditAuthenticated(client, s, query, limit)),
-  )
-  return settled.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
+  if (!result.ok) {
+    throw new Error(`Reddit/Apify collection failed (${result.error.kind}): ${result.error.message}`)
+  }
+
+  const raw = result.value
+  if (raw.length === 0) return []
+
+  const items = raw.flatMap((entry) => {
+    const parsed = ApifyRedditPostSchema.safeParse(entry)
+    if (!parsed.success) return []
+    const item = toCollectedItem(parsed.data)
+    return item ? [item] : []
+  })
+
+  if (items.length === 0) {
+    throw new Error(
+      `Reddit/Apify collection failed (bad-shape): actor returned ${raw.length} item(s) but none matched the expected post shape`,
+    )
+  }
+
+  return items
 }
