@@ -105,6 +105,8 @@ export async function runApifyActor(
     console.warn('[apify] non-ok status', actorId, error.status)
   } else if (error.kind === 'network') {
     console.warn('[apify] fetch error', actorId)
+  } else if (error.kind === 'bad-shape') {
+    console.warn('[apify] unexpected response shape', actorId, error.message)
   }
   return []
 }

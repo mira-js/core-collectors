@@ -78,8 +78,7 @@ function normalizeSubreddit(post: ApifyRedditPost): string {
   return name.replace(/^\/?r\//, '')
 }
 
-function toCollectedItem(post: ApifyRedditPost): CollectedItem | null {
-  if (!post.url) return null
+function toCollectedItem(post: ApifyRedditPost): CollectedItem {
   return {
     source: CoreSource.reddit,
     url: post.url,
@@ -132,8 +131,7 @@ export async function collectReddit(options: RedditCollectorOptions): Promise<Co
   const items = raw.flatMap((entry) => {
     const parsed = ApifyRedditPostSchema.safeParse(entry)
     if (!parsed.success) return []
-    const item = toCollectedItem(parsed.data)
-    return item ? [item] : []
+    return [toCollectedItem(parsed.data)]
   })
 
   if (items.length === 0) {
