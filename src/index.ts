@@ -2,6 +2,8 @@ export type { CollectedItem } from '@mira/shared-core'
 
 export { collectReddit } from './reddit.js'
 export type { RedditCollectorOptions } from './reddit.js'
+export { planRedditRun, MAX_REDDIT_SEEDS } from './reddit-run-plan.js'
+export type { RedditDepth, RedditRunPlan } from './reddit-run-plan.js'
 
 export { collectHackerNews } from './hackernews.js'
 export type { HNCollectorOptions } from './hackernews.js'

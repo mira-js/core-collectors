@@ -21,7 +21,7 @@ pnpm add @mia/core-collectors
 
 ### Reddit — `collectReddit`
 
-Searches one or more subreddits for posts matching a query via the Apify actor [`trudax/reddit-scraper`](https://apify.com/trudax/reddit-scraper) — a **paid rental actor**. Reddit's own unauthenticated JSON API returns 403, and the free OAuth tier excludes competitor monitoring, so there is no free fallback path.
+Searches one or more subreddits for posts matching a query via the Apify actor [`fatihtahta/reddit-scraper-search-fast`](https://apify.com/fatihtahta/reddit-scraper-search-fast) — **pay-per-event**, billed per dataset record. Reddit's own unauthenticated JSON API returns 403, and the free OAuth tier excludes competitor monitoring, so there is no free fallback path.
 
 ```ts
 import { collectReddit } from '@mia/core-collectors'
@@ -29,7 +29,7 @@ import { collectReddit } from '@mia/core-collectors'
 const items = await collectReddit({
   subreddits: ['SaaS', 'startups', 'smallbusiness'],
   query: 'CRM pain points',
-  limit: 25,    // per subreddit, default 25
+  depth: 'quick',   // 'quick' (default) | 'deep' — decides the per-run caps
 })
 ```
 
@@ -39,9 +39,45 @@ const items = await collectReddit({
 APIFY_API_TOKEN=      # required — collectReddit throws without it
 ```
 
-All subreddits are covered by a **single** actor run (one start URL per subreddit);
-`limit` maps to the actor's `maxPostCount` and stays per-subreddit. Rate limiting and
-retries are handled by the Apify platform; cost is per result, so keep `limit` tight.
+All subreddits are covered by a **single** actor run — one Reddit *search URL* per
+subreddit in the actor's `urls` input (URLs take priority over `queries`). The
+actor input is fixed apart from the caps:
+
+```jsonc
+{
+  "urls": ["https://www.reddit.com/r/SaaS/search/?q=…&restrict_sr=1&sort=relevance&t=year"],
+  "sort": "relevance", "timeframe": "year",
+  "scrapeComments": true, "maxComments": 3, "maxPosts": 8,
+  "strictTokenFilter": true, "maximize_coverage": false,
+  "includeNsfw": false, "sentiment_analysis": false, "content_analysis": false
+}
+```
+
+**Cost is bounded, not caller-controlled.** `planRedditRun(depth, subredditCount)`
+(`src/reddit-run-plan.ts`) computes `maxPosts`/`maxComments` so that
+`seeds × maxPosts × (1 + maxComments)` — the billed-result count, since each post
+*and* each comment is one billed record — stays at **≤ 100 for `quick`** and
+**≤ 500 for `deep`**. The seed list is capped at `MAX_REDDIT_SEEDS` (5); extra
+subreddits are dropped with a warning. Comments are never turned off: extraction
+uses `raw_replies` as corroboration against clickbait titles, and `maxComments`
+never exceeds 5 because downstream only sends `raw_replies.slice(0, 5)` to the LLM.
+
+**Output shape — posts and comments are sibling records**, not nested:
+
+```jsonc
+{ "kind": "post",    "id": "1hvoazn", "title": "…", "body": "…", "author": "…",
+  "score": 3489, "num_comments": 43, "subreddit": "Baking", "created_utc": "…", "url": "…" }
+{ "kind": "comment", "id": "m5un6bj", "postId": "1hvoazn", "body": "…",
+  "score": 76, "depth": 0, "…": "…" }
+```
+
+Only `kind: "post"` records become `CollectedItem`s. Comment records are grouped by
+`postId` and become that post's `raw_replies` — top-level comments (`depth === 0`)
+first, then by `score` descending, capped at 5 bodies. `id` and `postId` are required
+non-empty, so a drift in either fails loudly instead of silently emptying replies.
+
+Rate limiting and retries are handled by the Apify platform. An empty `subreddits`
+list returns `[]` without dispatching a (paid) run.
 
 See *Error behavior* below — this collector throws rather than returning partial results.
 

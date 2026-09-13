@@ -1,51 +1,196 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`collectReddit (Apify) > maps the fixture actor run to CollectedItem[] 1`] = `
+exports[`collectReddit (Apify) > maps the real fixture actor run to CollectedItem[] 1`] = `
 [
   {
-    "author": "saas_founder_92",
-    "body": "We switched billing providers last month and every third invoice goes out twice. Support has been useless.",
+    "author": "Competitive-Tax-2190",
+    "body": "My friend and I kept running into the same problems with invoice tools: rigid templates, no easy way to place a signature, awkward number/date formats for EU clients, and "customization" that usually meant nothing more than renaming fields instead of actually rearranging them.
+
+Free tools weren't much better either. Many added their own branding, showed ads, or limited the number of invoices you could create.
+
+Instead of continuing to work around those limitations, we decided to build our own invoicing tool, InvoicingBuilder.com, with one goal in mind: **real customization**. We wanted users to be able to move fields freely, place signatures and branding where they make sense, and create invoice layouts that fit different clients and regional requirements instead of adapting their workflow to a fixed template.
+
+As we've continued building it, we've added Clockify and Toggl Track integrations and a developer API, and we're currently working on integrations with tools like Notion and ClickUp based on user feedback.
+
+For those of you who send invoices regularly:
+
+* What's your biggest frustration with your current invoicing software?
+* Is invoice layout customization something you care about, or are the standard templates good enough?
+* If you could change one thing about your invoicing tool, what would it be?
+
+I'd genuinely appreciate hearing your experiences, even if they point out flaws in our approach.",
     "engagement": {
-      "comments": 38,
-      "upvotes": 214,
+      "comments": 20,
+      "upvotes": 2,
     },
     "raw_replies": [
-      "Same here. We moved to a different provider after the third incident.",
-      "Check your webhook retry config — that bit us too.",
+      "Pls stop this "i got tired of" format, leave that on linkedin",
+      "[removed]",
+      "This is actually a solid direction. The pain you described is real... most invoice tools call it "customization", but it's usually just swapping labels around a fixed layout. The EU formatting + signature placement point especially makes sense. I've also been looking at Unlayer Elements for PDF invoice-style docs since that component-based approach feels more flexible.",
     ],
     "source": "reddit",
     "subreddit": "SaaS",
-    "timestamp": "2026-08-14T09:12:44.000Z",
-    "title": "Invoicing tool keeps double charging our customers",
-    "url": "https://www.reddit.com/r/SaaS/comments/1abcxyz/invoicing_tool_keeps_double_charging/",
+    "timestamp": "2026-07-06T09:23:03.000Z",
+    "title": "I got tired of rigid invoice templates, so my friend and I built our own solution.",
+    "url": "https://www.reddit.com/r/SaaS/comments/1uosaqo/i_got_tired_of_rigid_invoice_templates_so_my/",
   },
   {
-    "author": "bootstrapped_bea",
-    "body": "",
+    "author": "abogoslov",
+    "body": "France's B2B e-invoicing mandate went live on September 1: every French company must now be able to *receive* structured e-invoices, and large/mid-size ones must *issue* them. SMEs must issue by September 2027. required formats are Factur-X / UBL / CII under EN 16931.
+
+french press this summer had roughly a third of SMEs not even started - curious how it looks from the software side.
+
+If your SaaS generates invoices for French business users (billing, POS, booking, vertical tools) - are you implementing against the spec in-house, wrapping an open-source lib, buying an API, or waiting it out?
+
+And what's the actual blocker - spec complexity, PDF/A-3 weirdness, testing/validation, or just priority?
+
+I'm a backend dev researching this space before deciding whether to build tooling for it. trying to figure out if this is a real pain or basically solved. not selling anything - I'll share a summary of answers back in the thread",
     "engagement": {
-      "comments": 12,
-      "upvotes": 47,
+      "comments": 9,
+      "upvotes": 2,
     },
-    "raw_replies": [],
+    "raw_replies": [
+      "same wave one country over: slovakia goes mandatory in 2027 and i build accounting software there, so this is my autumn too. the spec is the easy part, EN 16931 in UBL is a few hundred lines of mapping once your invoice model is right. what eats the time is everything around it: the validator and test environment, the network onboarding (peppol access point or the national platform, certificates), and the boring edge cases pdf invoices let you fudge for twenty years, credit notes, rounding, vat exemption codes. for a small vendor i would not build the transport layer, use an access point provider's api and keep the document mapping in-house, that is where your product knowledge is. and the blocker is priority, not complexity: nobody's customer asks for it until the month before the deadline.",
+      "[removed]",
+      ""the validator and test environment" ate time - what was actually missing there? official validators exist, so was it the feedback loop? and the edge cases - did you hand-roll those mappings case by case, or is that a layer u'd have paid someone else to keep correct? asking because thatss the exact buy-vs-own line im trying to locate. and "nobody asks until the month before" - painfully consistent with the french numbers, a third of SMEs still havent started",
+    ],
     "source": "reddit",
     "subreddit": "SaaS",
-    "timestamp": "2026-08-19T17:03:10.000Z",
-    "title": "What do you use for invoicing at <$10k MRR?",
-    "url": "https://www.reddit.com/r/SaaS/comments/1abd001/what_do_you_use_for_invoicing/",
+    "timestamp": "2026-09-02T15:00:38.000Z",
+    "title": "Do you have French business customers? How are you handling France's new e-invoicing mandate?",
+    "url": "https://www.reddit.com/r/SaaS/comments/1w5ctkt/do_you_have_french_business_customers_how_are_you/",
   },
   {
-    "author": "[deleted]",
-    "body": "Spending 6+ hours a week matching payouts to invoices by hand.",
+    "author": "Aviation2025",
+    "body": "\\[Self promote\\]  
+  
+In Europe e-invoicing is becoming a legal requirement. France just started, Germany already had Factur-X, Greece is going overboard with their own AADE interconnected system.
+
+I believe many people are trying to get on that train and they are making great tools for invoicing, however personally as an ex-freelancer they dont quite bite it.
+
+I started building Billino so I can tackle a few things
+
+\\- VAT especially with all the complications/regulations within EU is not always handled, is my product in a Reduced Tax rate category? Am I tax exempt? What is the soft ceiling? what is the hard ceiling? all these are painfull things that a freelancer or a small business does not want to deal with or have to ask their accountant all the time.
+
+\\- honestly, shareable links. sending invoices via whatsapp, downloading them from your computer etc is annoying.
+
+\\- invoicing and all the above topics, should be free. There are tons of features you can add on top to monetize without ever making the user feeling they are being gated. For example, shareable links should always be free, but read receipts (have they opened it?) is more of a nice to have.
+
+I am still polishing out the main features and will afterwards move to the "plus" features but for now I am curious to see how people use the tool.
+
+Suprisignly it is doing great in Austria :)
+
+If you are in Germany, Austria or Cyprus you can start using it immediately, if not and would like to please drop a comment and I will see how complex the rules of your country are. For example Greece is a no-go because from Oct 1st, all such tools need to be authorized by the Greek goverment and for me that is a great struggle.
+
+Thanks for reading and if you want you can just try the live demo which has example data for the whole platform!  
+  
+\\[Self promote\\]",
     "engagement": {
-      "comments": 0,
-      "upvotes": 9,
+      "comments": 9,
+      "upvotes": 3,
     },
-    "raw_replies": [],
+    "raw_replies": [
+      "generating invoices seems like the easy part next to maintaining all that. where does Billino source each countrys rules, and how quickly can it update when one changes?",
+      "[removed]",
+      "I simply use EasyInvoice E-Rechnung but it’s for iOS / macOS only .. no subscription needed though",
+    ],
     "source": "reddit",
     "subreddit": "SaaS",
-    "timestamp": "2026-08-21T04:55:02.000Z",
-    "title": "Invoice reconciliation is eating my week",
-    "url": "https://www.reddit.com/r/SaaS/comments/1abd442/deleted_author_invoice_thread/",
+    "timestamp": "2026-09-03T10:28:05.000Z",
+    "title": "YAIT - Yet Another Invoicing Tool, but built for compliance",
+    "url": "https://www.reddit.com/r/SaaS/comments/1w63j7r/yait_yet_another_invoicing_tool_but_built_for/",
+  },
+  {
+    "author": "TangeloOk9486",
+    "body": "Ive been planning to build a small tool for SMBs that deal with a lot of invoices and recipts but before getting started on and going back and forth few things I'd like to get my ambition clear about on this. 
+
+my idea is basically that the tool takes invoices and recipts a shop prints everydat, pulls data off them and gives them a clean montly report of what theyve run, cause the monthly expense and other stuff get messed up real quick. one time payment and runs fully on their hardware while nothing sits on our end
+
+what i am concerned about is the tech stack and the parsing approach a bit like since its meant to be fully on prem a local parser like liteparse or tesseract keeps everything in their box but messy thermal printed invoices are where local ocr gets unreliable for which cloud parsers - llamaparse handle that kind of thing better. So do i stay fully local and take the accuracy hit on low config hardware or offer an optinal mode and break the pure on prem promise? Also what other local parser options are availavle for such tasks
+
+This is the stack i am considering:
+
+* desktop app (Tauri or electron) -biased towads electron cause I have worked on this before
+* SQLite for local storage
+* a local or cloud parser depending on robustness
+* a reporting/charts layer
+* one time license key along with update mechanism
+
+one other vital thing is, i am quite unsure about the distribution, how do other people in this community handle similar project of this kind. considering myself giving attention on this as a lot of non technical shops sounds tedius so shall i go for tooling like alien dev for deployment or would this be an overkill
+
+Also who shall be my target customers for this other than shops? 
+
+for fellow devs, do you guys monitor your runtime at production level? if so then how do you guys handle this
+
+",
+    "engagement": {
+      "comments": 9,
+      "upvotes": 2,
+    },
+    "raw_replies": [
+      "Before choosing the stack, I’d collect real receipts from a few shops and test the parsing first. Faded thermal prints and different invoice layouts will probably be harder to solve than the desktop app itself.
+
+If local processing is important, PaddleOCR or Tesseract with a manual review step could be a good starting point. Since you already know Electron, I’d stick with it and keep the first version simple.
+
+Also, accountants working with several local shops might be a better target customer than individual shop owners. Do you already have real documents to test with?",
+      "[removed]",
+      "thank you very much, never actually thought of collecting actual thermal recipts, seems like need to visit some cafes ",
+    ],
+    "source": "reddit",
+    "subreddit": "SaaS",
+    "timestamp": "2026-09-01T10:31:12.000Z",
+    "title": "Mapping on building an on-prem invoice tool for small shops for a local area",
+    "url": "https://www.reddit.com/r/SaaS/comments/1w481j6/mapping_on_building_an_onprem_invoice_tool_for/",
+  },
+  {
+    "author": "FlatGovernment6743",
+    "body": "Landing our first enterprise client felt like we'd made it. $9,200/quarter. Signed after 6 weeks of calls. Their procurement team made us fill out a 40page security questionnaire. We did it gladly because $36,800/year.
+
+First invoice went out Jan 1. Net 30 terms.
+
+Day 30. Nothing.
+
+Day 45. Nothing.
+
+Day 60. Nothing.
+
+Emailed accounts payable. No response. Emailed our contact. "Let me check." Nothing. Called. Voicemails. Sent a formal demand letter. Got a response saying the invoice "didn't match the PO format" and needed resubmission.
+
+Resubmitted. Another 30 days. Clock reset.
+
+Day 87, they finally paid. During those 87 days I spent roughly 20 hours chasing the money. My lawyer drafted two letters at $350/hour. We considered a collections agency that takes 2533%.
+
+The $9,200 invoice cost about $2,100 in time and legal to collect.
+
+What I learned: enterprise clients pay slowly not because they're malicious but because their payment systems are designed to be slow. AP departments are understaffed. PO matching is bureaucratic. Net 30 is a lie. Net 60 is optimistic. Net 90 is reality.
+
+What I changed: we require annual upfront for contracts under $50K. Quarterly billing comes with a 15% premium. Payment terms are 2 pages long and specify escalation timelines, late fees, and exact PO format. also set up automated reminders through dreamlit that fire from our database when an invoice passes due date — day 7, day 14, day 21. doesn't replace the hard conversations but at least the early followups happen without me thinking about them.
+
+Should have had all this from day one.",
+    "engagement": {
+      "comments": 58,
+      "upvotes": 139,
+    },
+    "raw_replies": [
+      "Just cut off the service? Then they will ask what’s going on and say “your payment failed, please put me in contact with an individual who can pay to restore services”
+
+If it’s something that runs without users just have an automation or scary emails saying “warning your IT security backend is due to turn off in 5 days.. this is going to happen when it does” blah blah. 
+
+Fear of unknown consequences gets people moving faster than demand letters.",
+      "The bad news is large enterprises have no interest in paying on time. They don't want to get the service shut off, but in their perfect world they will hold on to the cash as long as possible without risking suspension.
+
+The good news is AR is one of the easiest processes to automate. You can draft an "invoice reminder" email template, a "your invoice is due" email template, 15 days overdue template, 30 days, etc. Craft them so they start politely and become increasingly firm. Eventually threaten suspension - if you're willing to follow through. You can use AI tools to help draft the templates. Then when you need them, just copy/paste and change a handful of details. Or better yet, use AI tools to read your AR and do that too.
+
+By the way, upfront payment is smart but be careful with that $50K rule. If cash flow is a problem, imagine how much of a problem your largest invoices might cause.",
+      "Can the mods do their job and remove ChatGPT engagement bait?
+
+And can people learn to stop engaging with it",
+    ],
+    "source": "reddit",
+    "subreddit": "SaaS",
+    "timestamp": "2026-03-28T01:50:59.000Z",
+    "title": "Our biggest enterprise client went 87 days past due on a $9,200 invoice. Collections almost cost more than the invoice.",
+    "url": "https://www.reddit.com/r/SaaS/comments/1s5nh7p/our_biggest_enterprise_client_went_87_days_past/",
   },
 ]
 `;
