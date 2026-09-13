@@ -35,7 +35,12 @@ const HNAlgoliaResponseSchema = z.object({
 export async function collectHackerNews(options: HNCollectorOptions): Promise<CollectedItem[]> {
   const { query, limit = 20, tags = 'story' } = options
 
-  const params = new URLSearchParams({ query, hitsPerPage: String(limit), tags })
+  const params = new URLSearchParams({
+    query,
+    hitsPerPage: String(limit),
+    tags,
+    removeWordsIfNoResults: 'lastWords',
+  })
   const res = await fetch(`${HN_ALGOLIA}/search?${params}`)
   if (!res.ok) throw new Error(`HN Algolia search failed: ${res.status}`)
 

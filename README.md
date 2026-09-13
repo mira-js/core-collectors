@@ -87,6 +87,11 @@ See *Error behavior* below — this collector throws rather than returning parti
 
 Searches stories (and optionally Ask HN / Show HN posts) via the Algolia HN API. No credentials required.
 
+Every request sends `removeWordsIfNoResults=lastWords`: Algolia keeps the strict
+AND-query when it matches, and only drops trailing query terms when the full query
+returns zero hits. Long multi-keyword queries therefore degrade to fewer terms
+instead of returning nothing.
+
 ```ts
 import { collectHackerNews } from '@mia/core-collectors'
 
