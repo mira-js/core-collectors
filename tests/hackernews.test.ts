@@ -91,4 +91,16 @@ describe('collectHackerNews', () => {
     fetchMock.mockResolvedValueOnce(new Response('Rate limited', { status: 429 }))
     await expect(collectHackerNews({ query: 'invoice' })).rejects.toThrow()
   })
+
+  it('always sends removeWordsIfNoResults=lastWords', async () => {
+    mockAlgoliaResponse()
+    await collectHackerNews({ query: 'invoice freelancer', limit: 10 })
+    const [defaultUrl] = fetchMock.mock.calls[0]
+    expect(String(defaultUrl)).toContain('removeWordsIfNoResults=lastWords')
+
+    mockAlgoliaResponse()
+    await collectHackerNews({ query: 'invoice freelancer', limit: 10, tags: '(story,comment)' })
+    const [taggedUrl] = fetchMock.mock.calls[1]
+    expect(String(taggedUrl)).toContain('removeWordsIfNoResults=lastWords')
+  })
 })
