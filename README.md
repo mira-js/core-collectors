@@ -61,6 +61,9 @@ actor input is fixed apart from the caps:
 subreddits are dropped with a warning. Comments are never turned off: extraction
 uses `raw_replies` as corroboration against clickbait titles, and `maxComments`
 never exceeds 5 because downstream only sends `raw_replies.slice(0, 5)` to the LLM.
+A caller may pass an optional `budget` (`collectReddit({ budget })`) to lower that
+ceiling when it shares one run cap across several billed sources, but never to
+raise it: the effective budget is `min(budget, cap for depth)`.
 
 **Output shape — posts and comments are sibling records**, not nested:
 

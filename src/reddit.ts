@@ -8,6 +8,12 @@ export interface RedditCollectorOptions {
   subreddits: string[]
   query: string
   depth?: RedditDepth
+  /**
+   * Optional billed-result budget for this run (a caller's share of a run cap
+   * split across several sources). Can only lower the depth cap — see
+   * `planRedditRun`. Omit it to use the full depth cap.
+   */
+  budget?: number
 }
 
 const REDDIT_ACTOR_ID = 'fatihtahta/reddit-scraper-search-fast'
@@ -140,9 +146,9 @@ function searchUrl(subreddit: string, query: string): string {
  * without dispatching (and paying for) a run.
  */
 export async function collectReddit(options: RedditCollectorOptions): Promise<CollectedItem[]> {
-  const { subreddits, query, depth = 'quick' } = options
+  const { subreddits, query, depth = 'quick', budget } = options
 
-  const plan = planRedditRun(depth, subreddits.length)
+  const plan = planRedditRun(depth, subreddits.length, budget)
   if (plan.seedLimit === 0) return []
 
   const seeds = subreddits.slice(0, plan.seedLimit)

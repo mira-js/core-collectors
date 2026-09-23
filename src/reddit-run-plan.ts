@@ -48,17 +48,22 @@ const COMMENTS_PER_POST: Record<RedditDepth, number> = { quick: 3, deep: 5 }
 /**
  * Decide the actor's per-run caps for `depth` and a subreddit count.
  *
+ * `budget` lets a caller that shares one run cap across several billed sources
+ * pass Reddit's slice. It can only lower the ceiling: the effective budget is
+ * `min(budget, BUDGET[depth])`, so no caller can raise Reddit's spend above the
+ * depth cap. Omitting it reproduces the depth cap exactly.
+ *
  * Lever order (fixed): cap the seed list, then reduce `maxPosts` (floor 1),
  * never drop comments.
  */
-export function planRedditRun(depth: RedditDepth, subredditCount: number): RedditRunPlan {
-  const budget = BUDGET[depth]
+export function planRedditRun(depth: RedditDepth, subredditCount: number, budget?: number): RedditRunPlan {
+  const effectiveBudget = Math.min(budget ?? BUDGET[depth], BUDGET[depth])
   const maxComments = Math.min(COMMENTS_PER_POST[depth], MAX_COMMENTS_PER_POST)
   const seedLimit = Math.max(0, Math.min(Math.floor(subredditCount), MAX_REDDIT_SEEDS))
 
   // A zero-seed run is never dispatched, but the plan must still be well formed.
   const divisor = Math.max(1, seedLimit) * (1 + maxComments)
-  const maxPosts = Math.max(1, Math.floor(budget / divisor))
+  const maxPosts = Math.max(1, Math.floor(effectiveBudget / divisor))
 
   return { maxPosts, maxComments, scrapeComments: true, seedLimit }
 }

@@ -11,5 +11,5 @@ export type { HNCollectorOptions } from './hackernews.js'
 export { collectNewsRSS } from './news-rss.js'
 export type { RSSCollectorOptions } from './news-rss.js'
 
-export { runApifyActor, requestApifyActor } from './apify.js'
+export { requestApifyActor } from './apify.js'
 export type { ApifyError, ApifyRunOptions } from './apify.js'

@@ -87,26 +87,3 @@ export async function requestApifyActor(
 
   return { ok: true, value: json }
 }
-
-/**
- * Lenient wrapper around {@link requestApifyActor}: logs and returns `[]` on
- * any failure. Kept for collectors that prefer degraded results over throwing.
- */
-export async function runApifyActor(
-  actorId: string,
-  input: Record<string, unknown>,
-  options?: ApifyRunOptions,
-): Promise<unknown[]> {
-  const result = await requestApifyActor(actorId, input, options)
-  if (result.ok) return result.value
-
-  const { error } = result
-  if (error.kind === 'http-status') {
-    console.warn('[apify] non-ok status', actorId, error.status)
-  } else if (error.kind === 'network') {
-    console.warn('[apify] fetch error', actorId)
-  } else if (error.kind === 'bad-shape') {
-    console.warn('[apify] unexpected response shape', actorId, error.message)
-  }
-  return []
-}
