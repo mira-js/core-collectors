@@ -1,4 +1,5 @@
 import type { Result } from '@mira/shared-core'
+import { recordApifyCall, recordBilledResults } from '@mira/shared-core/usage-scope'
 
 export interface ApifyError {
   kind: 'missing-token' | 'network' | 'http-status' | 'bad-shape'
@@ -33,6 +34,7 @@ export async function requestApifyActor(
   const timeoutSecs = options?.timeoutSecs ?? 120
   const url = `https://api.apify.com/v2/acts/${encodeURIComponent(actorId)}/run-sync-get-dataset-items?token=${token}&timeout=${timeoutSecs}`
 
+  recordApifyCall()
   let res: Response
   try {
     res = await fetch(url, {
@@ -42,6 +44,7 @@ export async function requestApifyActor(
       signal: AbortSignal.timeout((timeoutSecs + 5) * 1000),
     })
   } catch (error) {
+    recordBilledResults(null)
     return {
       ok: false,
       error: {
@@ -53,6 +56,7 @@ export async function requestApifyActor(
   }
 
   if (!res.ok) {
+    recordBilledResults(null)
     return {
       ok: false,
       error: {
@@ -68,6 +72,7 @@ export async function requestApifyActor(
   try {
     json = await res.json()
   } catch (error) {
+    recordBilledResults(null)
     return {
       ok: false,
       error: {
@@ -79,11 +84,13 @@ export async function requestApifyActor(
   }
 
   if (!Array.isArray(json)) {
+    recordBilledResults(null)
     return {
       ok: false,
       error: { kind: 'bad-shape', actorId, message: 'response body was not an array' },
     }
   }
 
+  recordBilledResults(json.length)
   return { ok: true, value: json }
 }
