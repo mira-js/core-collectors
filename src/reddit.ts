@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { CollectedItem } from '@mira/shared-core'
 import { CoreSource } from '@mira/shared-core'
+import { logger } from '@mira/shared-core/logger'
 import { requestApifyActor } from './apify.js'
 import { planRedditRun, type RedditDepth } from './reddit-run-plan.js'
 
@@ -153,7 +154,7 @@ export async function collectReddit(options: RedditCollectorOptions): Promise<Co
 
   const seeds = subreddits.slice(0, plan.seedLimit)
   if (seeds.length < subreddits.length) {
-    console.warn(
+    logger.warn(
       '[reddit] subreddit list capped',
       { kept: seeds, dropped: subreddits.slice(plan.seedLimit) },
     )
