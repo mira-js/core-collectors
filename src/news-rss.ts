@@ -39,7 +39,8 @@ function classifyMatch(text: string, qLower: string, terms: string[]): MatchTier
 
 async function fetchFullText(articleUrl: string): Promise<string> {
   const headers: Record<string, string> = { Accept: 'text/markdown', 'X-Return-Format': 'markdown' }
-  if (process.env.JINA_API_KEY) headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`
+  const jinaKey = process.env.JINA_API_KEY
+  if (jinaKey) headers['Authorization'] = `Bearer ${jinaKey}`
 
   const request = fetch(`https://r.jina.ai/${articleUrl}`, { headers })
     .then((res) => (res.ok ? res.text() : ''))
