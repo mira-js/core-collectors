@@ -192,9 +192,9 @@ The three built-in collectors are the best reference — each is under 130 lines
 
 ---
 
-## Part of mira-core
+## Part of Mira's open core
 
-This package is part of the [mira-core](https://github.com/mira-js/mira-core) monorepo — a self-hostable market intelligence engine.
+This package is part of Mira's open core. See [github.com/mira-js](https://github.com/mira-js) for the other packages.
 
 ---
 
