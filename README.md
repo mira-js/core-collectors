@@ -1,18 +1,18 @@
-# @mia/core-collectors
+# @mira/core-collectors
 
-[![npm](https://img.shields.io/npm/v/@mia/core-collectors)](https://www.npmjs.com/package/@mia/core-collectors)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](https://github.com/mira-js/mia-core/blob/main/LICENSE)
+[![npm](https://img.shields.io/npm/v/@mira/core-collectors)](https://www.npmjs.com/package/@mira/core-collectors)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
-Reddit, HackerNews, and RSS/News collectors for the MIA pipeline. Each function returns `CollectedItem[]` from `@mia/shared-core`. All three work without credentials — bring API keys for higher rate limits or full-text extraction.
+Reddit, HackerNews, and RSS/News collectors for the MIA pipeline. Each function returns `CollectedItem[]` from `@mira/shared-core`. All three work without credentials — bring API keys for higher rate limits or full-text extraction.
 
 ---
 
 ## Install
 
 ```bash
-npm install @mia/core-collectors
+npm install @mira/core-collectors
 # or
-pnpm add @mia/core-collectors
+pnpm add @mira/core-collectors
 ```
 
 ---
@@ -24,7 +24,7 @@ pnpm add @mia/core-collectors
 Searches one or more subreddits for posts matching a query via the Apify actor [`fatihtahta/reddit-scraper-search-fast`](https://apify.com/fatihtahta/reddit-scraper-search-fast) — **pay-per-event**, billed per dataset record. Reddit's own unauthenticated JSON API returns 403, and the free OAuth tier excludes competitor monitoring, so there is no free fallback path.
 
 ```ts
-import { collectReddit } from '@mia/core-collectors'
+import { collectReddit } from '@mira/core-collectors'
 
 const items = await collectReddit({
   subreddits: ['SaaS', 'startups', 'smallbusiness'],
@@ -96,7 +96,7 @@ returns zero hits. Long multi-keyword queries therefore degrade to fewer terms
 instead of returning nothing.
 
 ```ts
-import { collectHackerNews } from '@mia/core-collectors'
+import { collectHackerNews } from '@mira/core-collectors'
 
 const items = await collectHackerNews({
   query: 'project management tool',
@@ -119,7 +119,7 @@ const items = await collectHackerNews({
 Fetches and filters articles from RSS/Atom feeds. Keyword filtering uses a two-tier match (exact phrase → term overlap) so you only ingest relevant articles. Optionally fetches full article text via Jina Reader.
 
 ```ts
-import { collectNewsRSS } from '@mia/core-collectors'
+import { collectNewsRSS } from '@mira/core-collectors'
 
 const items = await collectNewsRSS({
   feeds: [
@@ -145,7 +145,7 @@ Full-text is only fetched for exact-match articles to avoid unnecessary API call
 
 ## Return type
 
-All three functions return `Promise<CollectedItem[]>`. See [@mia/shared-core](../shared-core) for the full type definition.
+All three functions return `Promise<CollectedItem[]>`. See [@mira/shared-core](../shared-core) for the full type definition.
 
 ```ts
 interface CollectedItem {
@@ -176,10 +176,10 @@ Each function is designed to be failure-tolerant:
 
 ## Writing your own collector
 
-Implement the `Collector` interface from `@mia/shared-core` and your collector will work anywhere in the pipeline:
+Implement the `Collector` interface from `@mira/shared-core` and your collector will work anywhere in the pipeline:
 
 ```ts
-import type { Collector, CollectorOptions, CollectedItem } from '@mia/shared-core'
+import type { Collector, CollectorOptions, CollectedItem } from '@mira/shared-core'
 
 export class MyCollector implements Collector {
   async collect({ query, limit = 25 }: CollectorOptions): Promise<CollectedItem[]> {
@@ -192,6 +192,14 @@ The three built-in collectors are the best reference — each is under 130 lines
 
 ---
 
-## Part of mia-core
+## Part of mira-core
 
-This package is part of the [mia-core](https://github.com/mira-js/mia-core) monorepo — a self-hostable market intelligence engine.
+This package is part of the [mira-core](https://github.com/mira-js/mira-core) monorepo — a self-hostable market intelligence engine.
+
+---
+
+## License
+
+AGPL-3.0-only — see [LICENSE](./LICENSE).
+
+Copyright (C) 2026 Fernando Nieto Pallares

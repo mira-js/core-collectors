@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { Result } from '@mira/shared-core'
 import { recordApifyCall, recordBilledResults } from '@mira/shared-core/usage-scope'
 

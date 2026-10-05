@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Cost planning for the Reddit Apify actor (`fatihtahta/reddit-scraper-search-fast`).
  *

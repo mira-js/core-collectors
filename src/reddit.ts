@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 import { z } from 'zod'
 import type { CollectedItem } from '@mira/shared-core'
 import { CoreSource } from '@mira/shared-core'

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-only
 export type { CollectedItem } from '@mira/shared-core'
 
 export { collectReddit } from './reddit.js'
