@@ -201,5 +201,6 @@ This package is part of the [mira-core](https://github.com/mira-js/mira-core) mo
 ## License
 
 AGPL-3.0-only — see [LICENSE](./LICENSE).
+Contributions require signing the [CLA](https://github.com/mira-js/.github/blob/main/CLA.md) — see [CONTRIBUTING.md](https://github.com/mira-js/.github/blob/main/CONTRIBUTING.md).
 
 Copyright (C) 2026 Fernando Nieto Pallares
