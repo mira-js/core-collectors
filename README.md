@@ -198,6 +198,10 @@ This package is part of Mira's open core. See [github.com/mira-js](https://githu
 
 ---
 
+## Security
+
+For details on reporting security vulnerabilities, see [SECURITY.md](https://github.com/mira-js/.github/blob/main/SECURITY.md) in the mira-js org repository, or use [private vulnerability reporting](https://github.com/mira-js/core-collectors/security/advisories/new) on this repository.
+
 ## License
 
 AGPL-3.0-only — see [LICENSE](./LICENSE).
