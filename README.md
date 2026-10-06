@@ -1,210 +1,117 @@
-# @mira/core-collectors
+<div align="center">
 
-[![npm](https://img.shields.io/npm/v/@mira/core-collectors)](https://www.npmjs.com/package/@mira/core-collectors)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
+# `@mira/core-collectors`
 
-Reddit, HackerNews, and RSS/News collectors for the MIA pipeline. Each function returns `CollectedItem[]` from `@mira/shared-core`. All three work without credentials — bring API keys for higher rate limits or full-text extraction.
+**Three sources. One shape.**
 
----
+Reddit · Hacker News · RSS → `CollectedItem[]`
+
+[![npm](https://img.shields.io/npm/v/@mira/core-collectors?style=flat-square&color=818cf8&labelColor=0e1320)](https://www.npmjs.com/package/@mira/core-collectors)
+[![license](https://img.shields.io/badge/license-AGPL--3.0-818cf8?style=flat-square&labelColor=0e1320)](./LICENSE)
+
+</div>
+
+<br>
+
+Fetches discussion from where your market talks and normalises it into the `CollectedItem` shape from `@mira/shared-core`, so everything downstream treats every source the same.
 
 ## Install
 
-```bash
+```sh
 npm install @mira/core-collectors
-# or
-pnpm add @mira/core-collectors
 ```
 
----
+## Sources
 
-## Collectors
-
-### Reddit — `collectReddit`
-
-Searches one or more subreddits for posts matching a query via the Apify actor [`fatihtahta/reddit-scraper-search-fast`](https://apify.com/fatihtahta/reddit-scraper-search-fast) — **pay-per-event**, billed per dataset record. Reddit's own unauthenticated JSON API returns 403, and the free OAuth tier excludes competitor monitoring, so there is no free fallback path.
+| | Function | Backed by | Credentials |
+|:--|:--|:--|:--|
+| **Reddit** | `collectReddit` | Apify actor (paid) | `APIFY_API_TOKEN` |
+| **Hacker News** | `collectHackerNews` | Algolia HN search | none |
+| **RSS** | `collectNewsRSS` | Your feeds | none · `JINA_API_KEY` optional for full text |
 
 ```ts
-import { collectReddit } from '@mira/core-collectors'
+import { collectReddit, collectHackerNews, collectNewsRSS } from '@mira/core-collectors'
 
-const items = await collectReddit({
-  subreddits: ['SaaS', 'startups', 'smallbusiness'],
-  query: 'CRM pain points',
-  depth: 'quick',   // 'quick' (default) | 'deep' — decides the per-run caps
-})
+const [reddit, hn, rss] = await Promise.allSettled([
+  collectReddit({ subreddits: ['SaaS', 'startups'], query: 'invoicing', depth: 'quick' }),
+  collectHackerNews({ query: 'invoicing software' }),
+  collectNewsRSS({ feeds: ['https://techcrunch.com/feed/'], query: 'invoicing' }),
+])
 ```
 
-**Credentials (required):**
+## Built to behave
 
-```bash
-APIFY_API_TOKEN=      # required — collectReddit throws without it
+- **Capped spend.** Reddit billed results are limited per depth, and a caller budget can only lower the cap. `planRedditRun` previews the limits without a call.
+- **One paid run.** All subreddits go into a single actor run. An empty list makes no call at all.
+- **Relaxes only when needed.** Hacker News drops trailing query words only when the full query finds nothing.
+- **Precise first.** RSS matching returns exact matches when there are any, loose ones otherwise.
+- **Accounted.** Apify calls and billed results are recorded into the shared usage scope.
+
+## When things go wrong
+
+| Function | On failure |
+|:--|:--|
+| `collectReddit` | Throws — missing token, network, HTTP or shape errors |
+| `collectHackerNews` | Throws — non-2xx, network or validation errors |
+| `collectNewsRSS` | Skips the bad feed and carries on |
+| `requestApifyActor` | Never throws — returns `Result<unknown[], ApifyError>` |
+
+> [!TIP]
+> Fanning out with `Promise.allSettled`? Surface the rejections — don't discard them.
+
+## Where it sits
+
+```mermaid
+flowchart LR
+  cli["cli"] -- HTTP --> api["api-core"]
+  cli -. types .-> shared["shared-core"]
+  api --> services["core-services"]
+  api --> collectors["core-collectors"]
+  services --> shared
+  collectors --> shared
+  classDef here fill:#818cf8,stroke:#a5b4fc,color:#0a0d1a
+  classDef pkg fill:#0e1320,stroke:#2a3250,color:#c7cbe0
+  class collectors here
+  class cli,api,shared,services pkg
 ```
 
-All subreddits are covered by a **single** actor run — one Reddit *search URL* per
-subreddit in the actor's `urls` input (URLs take priority over `queries`). The
-actor input is fixed apart from the caps:
+<details>
+<summary><b>Configuration</b></summary>
 
-```jsonc
-{
-  "urls": ["https://www.reddit.com/r/SaaS/search/?q=…&restrict_sr=1&sort=relevance&t=year"],
-  "sort": "relevance", "timeframe": "year",
-  "scrapeComments": true, "maxComments": 3, "maxPosts": 8,
-  "strictTokenFilter": true, "maximize_coverage": false,
-  "includeNsfw": false, "sentiment_analysis": false, "content_analysis": false
-}
+<br>
+
+| Variable | For |
+|:--|:--|
+| `APIFY_API_TOKEN` | Reddit and `requestApifyActor` |
+| `MIA_ENABLE_FULLTEXT=true` | RSS full text through Jina Reader, exact matches only |
+| `JINA_API_KEY` | Optional key for Jina Reader |
+
+The collector reads `MIA_ENABLE_FULLTEXT`; the standalone API reads `MIRA_ENABLE_FULLTEXT`. Set each as spelled.
+
+</details>
+
+<details>
+<summary><b>Build from source</b></summary>
+
+<br>
+
+Clone next to `shared` in a pnpm workspace, then:
+
+```sh
+pnpm install && pnpm build
 ```
 
-**Cost is bounded, not caller-controlled.** `planRedditRun(depth, subredditCount)`
-(`src/reddit-run-plan.ts`) computes `maxPosts`/`maxComments` so that
-`seeds × maxPosts × (1 + maxComments)` — the billed-result count, since each post
-*and* each comment is one billed record — stays at **≤ 100 for `quick`** and
-**≤ 500 for `deep`**. The seed list is capped at `MAX_REDDIT_SEEDS` (5); extra
-subreddits are dropped with a warning. Comments are never turned off: extraction
-uses `raw_replies` as corroboration against clickbait titles, and `maxComments`
-never exceeds 5 because downstream only sends `raw_replies.slice(0, 5)` to the LLM.
-A caller may pass an optional `budget` (`collectReddit({ budget })`) to lower that
-ceiling when it shares one run cap across several billed sources, but never to
-raise it: the effective budget is `min(budget, cap for depth)`.
+</details>
 
-**Output shape — posts and comments are sibling records**, not nested:
+<br>
 
-```jsonc
-{ "kind": "post",    "id": "1hvoazn", "title": "…", "body": "…", "author": "…",
-  "score": 3489, "num_comments": 43, "subreddit": "Baking", "created_utc": "…", "url": "…" }
-{ "kind": "comment", "id": "m5un6bj", "postId": "1hvoazn", "body": "…",
-  "score": 76, "depth": 0, "…": "…" }
-```
-
-Only `kind: "post"` records become `CollectedItem`s. Comment records are grouped by
-`postId` and become that post's `raw_replies` — top-level comments (`depth === 0`)
-first, then by `score` descending, capped at 5 bodies. `id` and `postId` are required
-non-empty, so a drift in either fails loudly instead of silently emptying replies.
-
-Rate limiting and retries are handled by the Apify platform. An empty `subreddits`
-list returns `[]` without dispatching a (paid) run.
-
-See *Error behavior* below — this collector throws rather than returning partial results.
-
----
-
-### HackerNews — `collectHackerNews`
-
-Searches stories (and optionally Ask HN / Show HN posts) via the Algolia HN API. No credentials required.
-
-Every request sends `removeWordsIfNoResults=lastWords`: Algolia keeps the strict
-AND-query when it matches, and only drops trailing query terms when the full query
-returns zero hits. Long multi-keyword queries therefore degrade to fewer terms
-instead of returning nothing.
-
-```ts
-import { collectHackerNews } from '@mira/core-collectors'
-
-const items = await collectHackerNews({
-  query: 'project management tool',
-  limit: 20,                    // default 20
-  tags: 'story',                // 'story' | 'ask_hn' | 'show_hn', default 'story'
-})
-```
-
-**Tags:**
-| `tags` | What it searches |
-|--------|-----------------|
-| `story` | Link posts and text posts (default) |
-| `ask_hn` | "Ask HN: …" posts only |
-| `show_hn` | "Show HN: …" posts only |
-
----
-
-### RSS / News — `collectNewsRSS`
-
-Fetches and filters articles from RSS/Atom feeds. Keyword filtering uses a two-tier match (exact phrase → term overlap) so you only ingest relevant articles. Optionally fetches full article text via Jina Reader.
-
-```ts
-import { collectNewsRSS } from '@mira/core-collectors'
-
-const items = await collectNewsRSS({
-  feeds: [
-    'https://techcrunch.com/feed/',
-    'https://news.ycombinator.com/rss',
-    'https://feeds.feedburner.com/venturebeat/SZYF',
-  ],
-  query: 'B2B SaaS pricing',    // optional keyword filter
-})
-```
-
-**Full-text extraction (optional):**
-Set `MIA_ENABLE_FULLTEXT=true` and optionally `JINA_API_KEY` to fetch full article bodies via [Jina Reader](https://jina.ai/reader). Without a key the reader is still accessible but at lower rate limits.
-
-```bash
-MIA_ENABLE_FULLTEXT=true
-JINA_API_KEY=jina_...
-```
-
-Full-text is only fetched for exact-match articles to avoid unnecessary API calls.
-
----
-
-## Return type
-
-All three functions return `Promise<CollectedItem[]>`. See [@mira/shared-core](../shared-core) for the full type definition.
-
-```ts
-interface CollectedItem {
-  source: string      // 'reddit' | 'hackernews' | 'news'
-  url: string
-  title: string
-  body: string
-  author: string
-  timestamp: string   // ISO 8601
-  engagement: { upvotes: number; comments: number }
-  raw_replies: string[]
-  subreddit?: string  // Reddit only
-  category?: string   // RSS only — feed title
-}
-```
-
----
-
-## Error behavior
-
-Each function is designed to be failure-tolerant:
-
-- `collectReddit` — **fails loudly**. One Apify actor call covers all subreddits; it throws when `APIFY_API_TOKEN` is unset, on a non-ok actor status, on a network/timeout error, on a non-array body, or when the actor returned a non-empty array from which no item survived schema validation (drift). A genuinely empty actor response returns `[]` — that is a real zero-result search, not a failure.
-- `collectHackerNews` — throws on non-2xx response (let your caller handle it)
-- `collectNewsRSS` — runs feeds in parallel with `Promise.allSettled`; failed feeds are silently skipped; full-text fetch has a 10 s timeout per article
-
----
-
-## Writing your own collector
-
-Implement the `Collector` interface from `@mira/shared-core` and your collector will work anywhere in the pipeline:
-
-```ts
-import type { Collector, CollectorOptions, CollectedItem } from '@mira/shared-core'
-
-export class MyCollector implements Collector {
-  async collect({ query, limit = 25 }: CollectorOptions): Promise<CollectedItem[]> {
-    // fetch, parse, return CollectedItem[]
-  }
-}
-```
-
-The three built-in collectors are the best reference — each is under 130 lines.
-
----
-
-## Part of Mira's open core
-
-This package is part of Mira's open core. See [github.com/mira-js](https://github.com/mira-js) for the other packages.
-
----
-
-## Security
-
-For details on reporting security vulnerabilities, see [SECURITY.md](https://github.com/mira-js/.github/blob/main/SECURITY.md) in the mira-js org repository, or use [private vulnerability reporting](https://github.com/mira-js/core-collectors/security/advisories/new) on this repository.
-
-## License
-
-AGPL-3.0-only — see [LICENSE](./LICENSE).
-Contributions require signing the [CLA](https://github.com/mira-js/.github/blob/main/CLA.md) — see [CONTRIBUTING.md](https://github.com/mira-js/.github/blob/main/CONTRIBUTING.md).
-
+<div align="center">
+<sub>
+Part of <a href="https://github.com/mira-js">Mira's open core</a> ·
+<a href="./LICENSE">AGPL-3.0-only</a> ·
+<a href="https://github.com/mira-js/.github/blob/main/CONTRIBUTING.md">Contributing</a> (<a href="https://github.com/mira-js/.github/blob/main/CLA.md">CLA</a>) ·
+<a href="https://github.com/mira-js/core-collectors/security/advisories/new">Report a vulnerability</a>
+<br>
 Copyright (C) 2026 Fernando Nieto Pallares
+</sub>
+</div>
