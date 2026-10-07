@@ -16,7 +16,18 @@ export interface RedditCollectorOptions {
    * `planRedditRun`. Omit it to use the full depth cap.
    */
   budget?: number
+  /**
+   * Optional ISO-8601 lower bound for post creation time — the monitor
+   * collection window. When set, the run asks the actor for posts newer than
+   * `since` only (`dateFrom`, newest-first, narrowest covering timeframe) and
+   * drops any parsed post created before it. Omit it for a full fetch.
+   */
+  since?: string
 }
+
+type RedditTimeframe = 'day' | 'week' | 'month' | 'year'
+
+const DAY_MS = 24 * 60 * 60 * 1000
 
 const REDDIT_ACTOR_ID = 'fatihtahta/reddit-scraper-search-fast'
 
@@ -125,8 +136,53 @@ function toCollectedItem(post: ApifyRedditPost, replies: string[]): CollectedIte
   }
 }
 
-function searchUrl(subreddit: string, query: string): string {
-  return `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/search/?q=${encodeURIComponent(query)}&restrict_sr=1&sort=relevance&t=year`
+function searchUrl(subreddit: string, query: string, sort = 'relevance', t: RedditTimeframe = 'year'): string {
+  return `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/search/?q=${encodeURIComponent(query)}&restrict_sr=1&sort=${sort}&t=${t}`
+}
+
+/**
+ * Narrowest actor timeframe that still covers `since` → `now`. A `since` in
+ * the future yields `'day'`.
+ */
+function timeframeFor(since: Date, now: Date): RedditTimeframe {
+  const span = now.getTime() - since.getTime()
+  if (span <= DAY_MS) return 'day'
+  if (span <= 7 * DAY_MS) return 'week'
+  if (span <= 31 * DAY_MS) return 'month'
+  return 'year'
+}
+
+interface SinceWindow {
+  /** The caller's ISO string, sent verbatim as the actor's `dateFrom`. */
+  raw: string
+  date: Date
+}
+
+/** Parse an optional `since`; throws on an unparsable value. */
+function parseSince(since: string | undefined): SinceWindow | undefined {
+  if (since === undefined) return undefined
+  const date = new Date(since)
+  if (Number.isNaN(date.getTime())) throw new Error(`reddit: invalid since ${JSON.stringify(since)}`)
+  return { raw: since, date }
+}
+
+/**
+ * The query part of the actor input. Without a window it is exactly the
+ * full-fetch input (relevance, past year); with one, it asks for posts since
+ * the window start, newest-first, over the narrowest covering timeframe.
+ */
+function queryInput(seeds: string[], query: string, sinceWindow: SinceWindow | undefined): Record<string, unknown> {
+  if (sinceWindow === undefined) {
+    return { urls: seeds.map((s) => searchUrl(s, query)), sort: 'relevance', timeframe: 'year' }
+  }
+  const timeframe = timeframeFor(sinceWindow.date, new Date())
+  return {
+    urls: seeds.map((s) => searchUrl(s, query, 'new', timeframe)),
+    dateFrom: sinceWindow.raw,
+    sort: 'new',
+    timeframe,
+    forceSortNewForTimeFilteredRuns: true,
+  }
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -145,10 +201,12 @@ function searchUrl(subreddit: string, query: string): string {
  * actor returned a non-empty array from which no post survived parsing (schema
  * drift). A genuinely empty actor response returns `[]` — that is a real
  * zero-result search, not a failure. An empty `subreddits` list returns `[]`
- * without dispatching (and paying for) a run.
+ * without dispatching (and paying for) a run. An unparsable `since` throws
+ * before any run is dispatched.
  */
 export async function collectReddit(options: RedditCollectorOptions): Promise<CollectedItem[]> {
-  const { subreddits, query, depth = 'quick', budget } = options
+  const { subreddits, query, depth = 'quick', budget, since } = options
+  const sinceWindow = parseSince(since)
 
   const plan = planRedditRun(depth, subreddits.length, budget)
   if (plan.seedLimit === 0) return []
@@ -162,9 +220,7 @@ export async function collectReddit(options: RedditCollectorOptions): Promise<Co
   }
 
   const result = await requestApifyActor(REDDIT_ACTOR_ID, {
-    urls: seeds.map((s) => searchUrl(s, query)),
-    sort: 'relevance',
-    timeframe: 'year',
+    ...queryInput(seeds, query, sinceWindow),
     scrapeComments: plan.scrapeComments,
     maxComments: plan.maxComments,
     maxPosts: plan.maxPosts,
@@ -198,6 +254,12 @@ export async function collectReddit(options: RedditCollectorOptions): Promise<Co
     )
   }
 
+  // The bad-shape check above runs on the unfiltered posts: a window that
+  // filters every post out is a real empty window, not schema drift.
+  const windowed = sinceWindow === undefined
+    ? posts
+    : posts.filter((post) => Date.parse(post.created_utc) >= sinceWindow.date.getTime())
+
   const replies = groupReplies(comments)
-  return posts.map((post) => toCollectedItem(post, replies.get(post.id) ?? []))
+  return windowed.map((post) => toCollectedItem(post, replies.get(post.id) ?? []))
 }
