@@ -3,6 +3,7 @@ export type { CollectedItem } from '@mira/shared-core'
 
 export { collectReddit } from './reddit.js'
 export type { RedditCollectorOptions } from './reddit.js'
+export { probeSubreddit } from './reddit-probe.js'
 export { planRedditRun, MAX_REDDIT_SEEDS } from './reddit-run-plan.js'
 export type { RedditDepth, RedditRunPlan } from './reddit-run-plan.js'
 

@@ -29,7 +29,7 @@ type RedditTimeframe = 'day' | 'week' | 'month' | 'year'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-const REDDIT_ACTOR_ID = 'fatihtahta/reddit-scraper-search-fast'
+export const REDDIT_ACTOR_ID = 'fatihtahta/reddit-scraper-search-fast'
 
 /** Replies actually consumed downstream — extraction slices to 5. */
 const MAX_REPLIES_PER_POST = 5
@@ -62,7 +62,7 @@ const TimestampSchema = z
  * reply attachment would silently produce empty `raw_replies` — requiring it
  * turns that into a loud `bad-shape` failure instead.
  */
-const ApifyRedditPostSchema = z.object({
+export const ApifyRedditPostSchema = z.object({
   kind: z.literal('post'),
   id: z.string().min(1),
   url: z.string().min(1),
