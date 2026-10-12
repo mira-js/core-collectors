@@ -30,6 +30,7 @@ type RedditTimeframe = 'day' | 'week' | 'month' | 'year'
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export const REDDIT_ACTOR_ID = 'fatihtahta/reddit-scraper-search-fast'
+export const REDDIT_ACTOR_TIMEOUT_SECS = 240
 
 /** Replies actually consumed downstream — extraction slices to 5. */
 const MAX_REPLIES_PER_POST = 5
@@ -229,7 +230,7 @@ export async function collectReddit(options: RedditCollectorOptions): Promise<Co
     includeNsfw: false,
     sentiment_analysis: false,
     content_analysis: false,
-  })
+  }, { timeoutSecs: REDDIT_ACTOR_TIMEOUT_SECS })
 
   if (!result.ok) {
     throw new Error(`Reddit/Apify collection failed (${result.error.kind}): ${result.error.message}`)

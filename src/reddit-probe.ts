@@ -3,7 +3,7 @@ import type { Result } from '@mira/shared-core'
 import { requestApifyActor, type ApifyError } from './apify.js'
 import { ApifyRedditPostSchema, REDDIT_ACTOR_ID } from './reddit.js'
 
-const PROBE_TIMEOUT_SECS = 60
+const PROBE_TIMEOUT_SECS = 240
 
 function bareName(subreddit: string): string {
   return subreddit.replace(/^\/?r\//i, '').toLowerCase()
